@@ -1,6 +1,7 @@
 package com.example.ui_practice_
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -8,8 +9,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
@@ -25,14 +25,15 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.ui_practice_.R
+import androidx.navigation.NavController
+import androidx.navigation.compose.rememberNavController
 import com.example.ui_practice_.ui.theme.BackgroundBlack
 
 @Composable
-fun FirstPage() {
+fun FirstPage(navController: NavController) {
     val customFontFamily = FontFamily(Font(R.font.angelina))
     val likeIcon: Painter = painterResource(id = R.drawable.like)
-    val searchIcon : Painter = painterResource(id = R.drawable.search)
+    val searchIcon: Painter = painterResource(id = R.drawable.search)
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -40,7 +41,8 @@ fun FirstPage() {
     ) {
         Row(
             modifier = Modifier
-                .fillMaxWidth().padding(top = 15.dp),
+                .fillMaxWidth()
+                .padding(top = 15.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
@@ -54,7 +56,7 @@ fun FirstPage() {
                     .padding(12.dp)
                     .weight(1f) // Add padding to the right
             )
-
+            
             IconButton(onClick = { /* Handle Like Click */ }) {
                 Icon(
                     painter = likeIcon,
@@ -65,19 +67,31 @@ fun FirstPage() {
             Spacer(modifier = Modifier.width(2.dp))
 
             IconButton(onClick = { /*TODO*/ }) {
-                Icon(painter = searchIcon ,
-                    contentDescription = "search",
+                Icon(
+                    painter = searchIcon,
+                    contentDescription = "Search",
                     tint = Color.White
                 )
             }
             Spacer(modifier = Modifier.width(9.dp))
         }
-        //now rest design should be out of row
+        Column (
+            modifier = Modifier.fillMaxWidth(),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
+        ){
+            Button(onClick = {
+                navController.navigate("second")
+            }) {
+                Text(text = "Next Page")
+            }
+        }
     }
 }
 
 @Preview(showBackground = true)
 @Composable
 fun FirstPagePreview() {
-    FirstPage()
+    val navController = rememberNavController() // Provide a valid NavController instance for preview
+    FirstPage(navController = navController)
 }
