@@ -18,13 +18,27 @@ class HomeViewModel : ViewModel() {
     private var currentPage = 1
     private var lastPage = 1
     private var query = "anime"
+    private var categories: String? = null
+    private var purity: String? = null
+    private var sorting: String? = null
+    private var order: String? = "asc"
 
     init {
         fetchImages()
     }
 
-    fun searchImages(query: String) {
+    fun searchImages(
+        query: String,
+        categories: String? = "101",
+        purity: String? = "111",
+        sorting: String? = "relevance",
+        order: String? = "desc"
+    ) {
         this.query = query
+        this.categories = categories
+        this.purity = purity
+        this.sorting = sorting
+        this.order = order
         currentPage = 1
         _images.clear()
         fetchImages()
@@ -42,7 +56,11 @@ class HomeViewModel : ViewModel() {
             try {
                 val response = WallhavenApi.service.searchWallpapers(
                     query = query,
-                    page = currentPage
+                    page = currentPage,
+                    categories = categories,
+                    purity = purity,
+                    sorting = sorting,
+                    order = order
                 )
                 lastPage = response.meta.lastPage
                 _images.addAll(response.data)

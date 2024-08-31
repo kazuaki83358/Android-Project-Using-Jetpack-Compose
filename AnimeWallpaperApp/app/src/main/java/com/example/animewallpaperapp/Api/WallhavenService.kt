@@ -23,7 +23,7 @@ interface WallhavenService {
         @Query("categories") categories: String?,// Categories filter
         @Query("purity") purity: String? = null,        // Purity filter (SFW, NSFW, etc.)
         @Query("sorting") sorting: String? = null,      // Sorting method (e.g., date_added, relevance, etc.)
-        @Query("order") order: String? = "asc",          // Sorting order (asc, desc)
+        @Query("order") order: String?,          // Sorting order (asc, desc)
         @QueryMap otherParams: Map<String, String> = emptyMap() // Additional parameters
     ): SearchResponse
 }

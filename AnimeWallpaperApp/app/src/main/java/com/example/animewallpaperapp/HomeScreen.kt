@@ -1,38 +1,70 @@
 package com.example.animewallpaperapp
 
+import android.util.Log
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextField
+import androidx.compose.material3.TextFieldDefaults
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.derivedStateOf
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.input.TextFieldValue
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import coil.compose.AsyncImage
+import androidx.navigation.NavController
 import coil.compose.rememberImagePainter
 import com.example.animewallpaperapp.Api.WallpaperInfoResponse
 import com.example.animewallpaperapp.model.HomeViewModel
-import kotlinx.coroutines.flow.firstOrNull
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun HomeScreen(homeViewModel: HomeViewModel = remember { HomeViewModel() }) {
-    val searchText = remember { mutableStateOf(TextFieldValue("")) }
+fun HomeScreen(navController: NavController, homeViewModel: HomeViewModel = remember { HomeViewModel() }) {
+    var searchText by remember { mutableStateOf(TextFieldValue("")) }
     val images by remember { derivedStateOf { homeViewModel.images } }
     val loading by remember { derivedStateOf { homeViewModel.loading } }
 
-    LaunchedEffect(searchText.value.text) {
-        homeViewModel.searchImages(searchText.value.text)
+    LaunchedEffect(searchText.text) {
+        if (searchText.text.isNotEmpty()) {
+            homeViewModel.searchImages(
+                query = searchText.text,
+                categories = "101",
+                purity = "111",
+                sorting = "relevance",
+                order = "desc"
+            )
+        }
     }
 
     Surface(
@@ -43,8 +75,8 @@ fun HomeScreen(homeViewModel: HomeViewModel = remember { HomeViewModel() }) {
             TopAppBar(
                 title = {
                     TextField(
-                        value = searchText.value,
-                        onValueChange = { searchText.value = it },
+                        value = searchText,
+                        onValueChange = { searchText = it },
                         placeholder = { Text("Search wallpapers...", color = Color.Gray) },
                         trailingIcon = {
                             Icon(
@@ -78,10 +110,12 @@ fun HomeScreen(homeViewModel: HomeViewModel = remember { HomeViewModel() }) {
                     CircularProgressIndicator()
                 }
             } else {
-                LazyColumn(
+                LazyVerticalGrid(
+                    columns = GridCells.Fixed(3),
                     contentPadding = PaddingValues(8.dp),
                     verticalArrangement = Arrangement.spacedBy(8.dp),
-                    state = rememberLazyListState().also { state ->
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    state = rememberLazyGridState().also { state ->
                         LaunchedEffect(state.firstVisibleItemIndex) {
                             val lastVisibleItem = state.layoutInfo.visibleItemsInfo.lastOrNull()
                             if (lastVisibleItem != null && lastVisibleItem.index == images.size - 1) {
@@ -91,7 +125,17 @@ fun HomeScreen(homeViewModel: HomeViewModel = remember { HomeViewModel() }) {
                     }
                 ) {
                     items(images) { wallpaper ->
-                        ImageCard(wallpaper = wallpaper)
+                        ImageCard(
+                            wallpaper = wallpaper,
+                            onClick = {
+                                wallpaper.id.let { id ->
+                                    navController.navigate("download/$id")
+                                } ?: run {
+                                    // Log the error if wallpaper.id is null
+                                    Log.e("HomeScreen", "Invalid imageId: ${wallpaper.id}")
+                                }
+                            }
+                        )
                     }
                 }
             }
@@ -100,7 +144,7 @@ fun HomeScreen(homeViewModel: HomeViewModel = remember { HomeViewModel() }) {
 }
 
 @Composable
-fun ImageCard(wallpaper: WallpaperInfoResponse) {
+fun ImageCard(wallpaper: WallpaperInfoResponse, onClick: () -> Unit) {
     val imagePainter = rememberImagePainter(
         data = wallpaper.thumbs.large,
         builder = {
@@ -110,7 +154,7 @@ fun ImageCard(wallpaper: WallpaperInfoResponse) {
         }
     )
 
-    // Use fixed size or proportional size
+    // Fixed size for the card
     val imageWidth = 300.dp  // Adjust width as needed
     val imageHeight = 200.dp // Adjust height as needed
 
@@ -119,7 +163,8 @@ fun ImageCard(wallpaper: WallpaperInfoResponse) {
         modifier = Modifier
             .padding(8.dp)
             .width(imageWidth)
-            .height(imageHeight),
+            .height(imageHeight)
+            .clickable(onClick = onClick), // Handle click event
         elevation = CardDefaults.cardElevation(4.dp)
     ) {
         Box(
@@ -127,8 +172,8 @@ fun ImageCard(wallpaper: WallpaperInfoResponse) {
                 .width(imageWidth)
                 .height(imageHeight)
         ) {
-            AsyncImage(
-                model = wallpaper.thumbs.large,
+            Image(
+                painter = imagePainter,
                 contentDescription = "Wallpaper Image",
                 modifier = Modifier
                     .fillMaxSize()
