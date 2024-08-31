@@ -30,7 +30,7 @@ class HomeViewModel : ViewModel() {
     fun searchImages(
         query: String,
         categories: String? = "101",
-        purity: String? = "111",
+        purity: String? = "100",
         sorting: String? = "relevance",
         order: String? = "desc"
     ) {

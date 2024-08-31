@@ -60,7 +60,7 @@ fun HomeScreen(navController: NavController, homeViewModel: HomeViewModel = reme
             homeViewModel.searchImages(
                 query = searchText.text,
                 categories = "101",
-                purity = "111",
+                purity = "100",
                 sorting = "relevance",
                 order = "desc"
             )
