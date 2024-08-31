@@ -15,27 +15,42 @@ class HomeViewModel : ViewModel() {
     private val _loading = mutableStateOf(false)
     val loading: Boolean get() = _loading.value
 
+    private var currentPage = 1
+    private var lastPage = 1
+    private var query = "anime"
+
     init {
         fetchImages()
     }
 
     fun searchImages(query: String) {
+        this.query = query
+        currentPage = 1
+        _images.clear()
+        fetchImages()
+    }
+
+    fun loadMoreImages() {
+        if (loading || currentPage >= lastPage) return
+        currentPage++
+        fetchImages()
+    }
+
+    private fun fetchImages() {
         viewModelScope.launch {
             _loading.value = true
             try {
-                val response = WallhavenApi.service.searchWallpapers(query = query)
-                println("API Response: ${response.data}") // Debugging line
-                _images.clear()
+                val response = WallhavenApi.service.searchWallpapers(
+                    query = query,
+                    page = currentPage
+                )
+                lastPage = response.meta.lastPage
                 _images.addAll(response.data)
             } catch (e: Exception) {
-                println("Error fetching images: ${e.message}") // Debugging line
+                println("Error fetching images: ${e.message}")
             } finally {
                 _loading.value = false
             }
         }
-    }
-
-    private fun fetchImages() {
-        searchImages("Demon Slayer") // Fetch default images or initial set
     }
 }

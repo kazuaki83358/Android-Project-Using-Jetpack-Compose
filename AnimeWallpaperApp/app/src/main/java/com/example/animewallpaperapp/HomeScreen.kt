@@ -2,6 +2,9 @@ package com.example.animewallpaperapp
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -24,22 +27,19 @@ import kotlinx.coroutines.flow.firstOrNull
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(homeViewModel: HomeViewModel = remember { HomeViewModel() }) {
-    // State to hold the text of the search bar
     val searchText = remember { mutableStateOf(TextFieldValue("")) }
     val images by remember { derivedStateOf { homeViewModel.images } }
     val loading by remember { derivedStateOf { homeViewModel.loading } }
 
-    // Update images when viewModel images change
-    LaunchedEffect(homeViewModel.images) {
-        // Optional: Handle side-effects when images update
+    LaunchedEffect(searchText.value.text) {
+        homeViewModel.searchImages(searchText.value.text)
     }
 
     Surface(
         modifier = Modifier.fillMaxSize(),
-        color = Color(0xFF212529) // Background color matching splash screen
+        color = Color(0xFF212529)
     ) {
         Column {
-            // Top App Bar with Search TextField
             TopAppBar(
                 title = {
                     TextField(
@@ -60,7 +60,7 @@ fun HomeScreen(homeViewModel: HomeViewModel = remember { HomeViewModel() }) {
                         singleLine = true,
                         maxLines = 1,
                         colors = TextFieldDefaults.textFieldColors(
-                            containerColor = Color.White, // Use containerColor instead of backgroundColor
+                            containerColor = Color.White,
                             focusedIndicatorColor = Color.Black,
                             unfocusedIndicatorColor = Color.Gray,
                             cursorColor = Color.Black
@@ -73,22 +73,26 @@ fun HomeScreen(homeViewModel: HomeViewModel = remember { HomeViewModel() }) {
                 )
             )
 
-            // Display loading spinner or single image
-            if (loading) {
+            if (loading && images.isEmpty()) {
                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                     CircularProgressIndicator()
                 }
             } else {
-                val image = images.firstOrNull() // Display the first image if available
-                image?.let {
-                    ImageCard(wallpaper = it)
-                } ?: Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(16.dp),
-                    contentAlignment = Alignment.Center
+                LazyColumn(
+                    contentPadding = PaddingValues(8.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                    state = rememberLazyListState().also { state ->
+                        LaunchedEffect(state.firstVisibleItemIndex) {
+                            val lastVisibleItem = state.layoutInfo.visibleItemsInfo.lastOrNull()
+                            if (lastVisibleItem != null && lastVisibleItem.index == images.size - 1) {
+                                homeViewModel.loadMoreImages()
+                            }
+                        }
+                    }
                 ) {
-                    Text(text = "No images available", color = Color.White)
+                    items(images) { wallpaper ->
+                        ImageCard(wallpaper = wallpaper)
+                    }
                 }
             }
         }
@@ -106,18 +110,22 @@ fun ImageCard(wallpaper: WallpaperInfoResponse) {
         }
     )
 
+    // Use fixed size or proportional size
+    val imageWidth = 300.dp  // Adjust width as needed
+    val imageHeight = 200.dp // Adjust height as needed
+
     Card(
         shape = RoundedCornerShape(8.dp),
         modifier = Modifier
             .padding(8.dp)
-            .fillMaxWidth()
-            .height(200.dp), // Adjust height as needed
+            .width(imageWidth)
+            .height(imageHeight),
         elevation = CardDefaults.cardElevation(4.dp)
     ) {
         Box(
             modifier = Modifier
-                .fillMaxWidth()
-                .height(200.dp) // Adjust height as needed
+                .width(imageWidth)
+                .height(imageHeight)
         ) {
             AsyncImage(
                 model = wallpaper.thumbs.large,
@@ -136,10 +144,4 @@ fun ImageCard(wallpaper: WallpaperInfoResponse) {
             color = Color.White
         )
     }
-}
-
-@Preview(showBackground = true)
-@Composable
-fun HomeScreenPreview() {
-    HomeScreen()
 }
