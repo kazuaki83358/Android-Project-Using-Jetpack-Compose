@@ -5,12 +5,9 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.tooling.preview.Preview
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -23,6 +20,7 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             val navController = rememberNavController()
+            // Setup the navigation graph
             SetupNavGraph(navController = navController)
         }
     }
@@ -30,18 +28,17 @@ class MainActivity : ComponentActivity() {
 
 @Composable
 fun SetupNavGraph(navController: NavHostController) {
+    // Create an instance of the DictionaryViewModel
+    val dictionaryViewModel: DictionaryViewModel = viewModel()
+
     NavHost(navController = navController, startDestination = "splash") {
         composable("splash") {
+            // SplashScreen that navigates to "home" after 2 seconds
             SplashScreen(navController = navController)
         }
         composable("home") {
-            HomeScreen(navController = navController)
+            // Pass the viewModel to HomeScreen
+            HomeScreen(navController = navController, viewModel = dictionaryViewModel)
         }
     }
-}
-
-@Preview(showBackground = true)
-@Composable
-fun GreetingPreview() {
-
 }
