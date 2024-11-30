@@ -39,7 +39,7 @@ fun HomeScreen(navController: NavHostController, viewModel: DictionaryViewModel)
             modifier = Modifier
                 .fillMaxWidth()
                 .background(Color(0xFF0066FF)) // Blue color for search bar
-                .padding(top = 25.dp, start = 16.dp, end = 16.dp, bottom = 3.dp) // Adjust top padding to zero
+                .padding(top = 25.dp, start = 16.dp, end = 16.dp) // Adjust top padding to zero
         ) {
             Row(
                 verticalAlignment = Alignment.CenterVertically,
@@ -142,13 +142,15 @@ fun WordCard(dictionaryResult: DictionaryResult) {
             fontSize = 24.sp,
             fontWeight = FontWeight.Bold,
             color = Color.Black,
-            modifier = Modifier.padding(end = 2.dp) // Added right padding
+            modifier = Modifier
+                .padding(start = 16.dp, end = 2.dp) // Added left and right padding
         )
         Text(
             text = dictionaryResult.phonetic ?: "No phonetic available",
             fontSize = 16.sp,
             color = Color.Gray,
-            modifier = Modifier.padding(end = 2.dp) // Added right padding
+            modifier = Modifier
+                .padding(start = 16.dp, end = 2.dp) // Added left and right padding
         )
 
         // Meaning(s)
@@ -158,21 +160,24 @@ fun WordCard(dictionaryResult: DictionaryResult) {
                 fontSize = 18.sp,
                 fontWeight = FontWeight.Bold,
                 color = Color.Black,
-                modifier = Modifier.padding(end = 2.dp) // Added right padding
+                modifier = Modifier
+                    .padding(start = 16.dp, end = 2.dp) // Added left and right padding
             )
             meaning.definitions.forEach { definition ->
                 Text(
                     text = definition.definition,
                     fontSize = 16.sp,
                     color = Color.Black,
-                    modifier = Modifier.padding(end = 2.dp) // Added right padding
+                    modifier = Modifier
+                        .padding(start = 16.dp, end = 2.dp) // Added left and right padding
                 )
                 definition.example?.let {
                     Text(
                         text = "\"$it\"",
                         fontSize = 14.sp,
                         color = Color.Gray,
-                        modifier = Modifier.padding(end = 2.dp) // Added right padding
+                        modifier = Modifier
+                            .padding(start = 16.dp, end = 2.dp) // Added left and right padding
                     )
                 }
                 Spacer(modifier = Modifier.height(8.dp)) // Space between definitions
