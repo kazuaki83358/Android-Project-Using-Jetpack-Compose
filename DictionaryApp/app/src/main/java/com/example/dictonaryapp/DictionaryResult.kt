@@ -5,7 +5,7 @@ data class DictionaryResult(
     val phonetic: String?,
     val phonetics: List<Phonetic>?,
     val origin: String?,
-    val meanings: List<Meaning>
+    val meanings: List<Meaning> = emptyList()
 )
 
 data class Phonetic(

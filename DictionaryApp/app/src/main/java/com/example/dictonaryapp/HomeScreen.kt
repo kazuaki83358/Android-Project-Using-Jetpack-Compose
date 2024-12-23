@@ -31,15 +31,15 @@ fun HomeScreen(navController: NavHostController, viewModel: DictionaryViewModel)
     // Main Column layout that will contain search results
     Column(
         modifier = Modifier
-            .fillMaxSize() // Ensure the column takes up the full screen
-            .background(Color.White) // Set background to white
+            .fillMaxSize()
+            .background(Color.White)
     ) {
         // Search bar layout - covering the full width and touching the top
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .background(Color(0xFF0066FF)) // Blue color for search bar
-                .padding(top = 25.dp, start = 16.dp, end = 16.dp) // Adjust top padding to zero
+                .background(Color(0xFF0066FF))
+                .padding(top = 25.dp, start = 16.dp, end = 16.dp)
         ) {
             Row(
                 verticalAlignment = Alignment.CenterVertically,
@@ -50,7 +50,7 @@ fun HomeScreen(navController: NavHostController, viewModel: DictionaryViewModel)
                 Box(
                     modifier = Modifier
                         .weight(1f)
-                        .background(Color.White, shape = RoundedCornerShape(30.dp)) // Rounded corners
+                        .background(Color.White, shape = RoundedCornerShape(30.dp))
                         .padding(horizontal = 16.dp, vertical = 10.dp)
                 ) {
                     BasicTextField(
@@ -70,7 +70,7 @@ fun HomeScreen(navController: NavHostController, viewModel: DictionaryViewModel)
                         ),
                         modifier = Modifier
                             .fillMaxWidth()
-                            .background(Color.Transparent) // Transparent background to see the rounded box
+                            .background(Color.Transparent)
                     )
                 }
 
@@ -81,7 +81,7 @@ fun HomeScreen(navController: NavHostController, viewModel: DictionaryViewModel)
                     Icon(
                         painter = painterResource(id = R.drawable.baseline_search_24),
                         contentDescription = "Search",
-                        tint = Color.White // White icon for contrast
+                        tint = Color.White
                     )
                 }
             }
@@ -91,14 +91,14 @@ fun HomeScreen(navController: NavHostController, viewModel: DictionaryViewModel)
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(top = 12.dp) // Adjust padding to avoid overlap with the search bar
+                .padding(top = 12.dp)
         ) {
             // Display loading indicator if isLoading is true
             if (isLoading) {
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
-                        .wrapContentSize(Alignment.Center) // Align in the center of the screen
+                        .wrapContentSize(Alignment.Center)
                 ) {
                     CircularProgressIndicator(
                         modifier = Modifier
@@ -112,7 +112,7 @@ fun HomeScreen(navController: NavHostController, viewModel: DictionaryViewModel)
             LazyColumn(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(top = 12.dp) // Adjust padding to avoid overlap with the search bar
+                    .padding(top = 12.dp)
             ) {
                 items(searchResults) { result ->
                     // Display each word and its meanings
@@ -129,55 +129,49 @@ fun HomeScreen(navController: NavHostController, viewModel: DictionaryViewModel)
         }
     }
 }
+
 @Composable
 fun WordCard(dictionaryResult: DictionaryResult) {
-    Column(modifier = Modifier
-        .fillMaxWidth()
-        .padding(bottom = 16.dp)
-        .background(Color.White, shape = RoundedCornerShape(8.dp)) // Card-like background
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(bottom = 16.dp)
+            .background(Color.White, shape = RoundedCornerShape(8.dp))
+            .padding(16.dp) // Padding inside the card
     ) {
         // Word and phonetic
         Text(
             text = dictionaryResult.word,
             fontSize = 24.sp,
             fontWeight = FontWeight.Bold,
-            color = Color.Black,
-            modifier = Modifier
-                .padding(start = 16.dp, end = 2.dp) // Added left and right padding
+            color = Color.Black
         )
         Text(
             text = dictionaryResult.phonetic ?: "No phonetic available",
             fontSize = 16.sp,
-            color = Color.Gray,
-            modifier = Modifier
-                .padding(start = 16.dp, end = 2.dp) // Added left and right padding
+            color = Color.Gray
         )
 
         // Meaning(s)
         dictionaryResult.meanings.forEach { meaning ->
+            Spacer(modifier = Modifier.height(8.dp)) // Space between meanings
             Text(
                 text = meaning.partOfSpeech,
                 fontSize = 18.sp,
                 fontWeight = FontWeight.Bold,
-                color = Color.Black,
-                modifier = Modifier
-                    .padding(start = 16.dp, end = 2.dp) // Added left and right padding
+                color = Color.Black
             )
             meaning.definitions.forEach { definition ->
                 Text(
                     text = definition.definition,
                     fontSize = 16.sp,
-                    color = Color.Black,
-                    modifier = Modifier
-                        .padding(start = 16.dp, end = 2.dp) // Added left and right padding
+                    color = Color.Black
                 )
                 definition.example?.let {
                     Text(
                         text = "\"$it\"",
                         fontSize = 14.sp,
-                        color = Color.Gray,
-                        modifier = Modifier
-                            .padding(start = 16.dp, end = 2.dp) // Added left and right padding
+                        color = Color.Gray
                     )
                 }
                 Spacer(modifier = Modifier.height(8.dp)) // Space between definitions
