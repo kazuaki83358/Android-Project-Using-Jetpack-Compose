@@ -1,5 +1,6 @@
 package com.example.firebase_practice
 
+import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -32,7 +33,14 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.TextFieldDefaults
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
+import com.google.firebase.auth.FirebaseAuth
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.tasks.await
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -40,6 +48,14 @@ fun LoginScreen() {
     val buttonBlue = Color(0xFF0094FF)
     val customBlue = Color(0xFF2091B6)
     val customCyan = Color(0xFFB1E7F8)
+
+    val email = remember { mutableStateOf("") }
+    val password = remember { mutableStateOf("") }
+
+    val context = LocalContext.current
+    val coroutineScope = rememberCoroutineScope()
+
+    var auth = FirebaseAuth.getInstance()
 
     Column(
         modifier = Modifier
@@ -57,7 +73,8 @@ fun LoginScreen() {
 
         // Email Input - Transparent white background and larger icon
         TextField(
-            value = "", onValueChange = {},
+            value = email.value,
+            onValueChange = { email.value = it },
             label = { Text("E-mail") },
             modifier = Modifier
                 .fillMaxWidth()
@@ -81,7 +98,8 @@ fun LoginScreen() {
 
         // Password Input - Transparent white background and larger icon
         TextField(
-            value = "", onValueChange = {},
+            value = password.value,
+            onValueChange = {password.value = it},
             label = { Text("Password") },
             modifier = Modifier
                 .fillMaxWidth()
@@ -106,7 +124,18 @@ fun LoginScreen() {
 
         // Sign In Button
         Button(
-            onClick = { /* Handle Register click */ },
+            onClick = {
+                coroutineScope.launch {
+                    coroutineScope.launch {
+                        val result = signInWithEmailAndPassword(auth,email.value,password.value)
+                        if (result != null) {
+                            Toast.makeText(context, "Login Successful", Toast.LENGTH_SHORT).show()
+                        } else {
+                            Toast.makeText(context, "Login Failed", Toast.LENGTH_SHORT).show()
+                        }
+                    }
+                }
+            },
             modifier = Modifier
                 .height(50.dp),
             colors = ButtonDefaults.buttonColors(containerColor = buttonBlue)
@@ -150,5 +179,16 @@ fun LoginScreen() {
                 color = Color.White
             )
         }
+    }
+}
+
+suspend fun signInWithEmailAndPassword(auth: FirebaseAuth, email: String, password: String): Boolean? {
+    return try {
+        // Sign in with Firebase
+        val result = auth.signInWithEmailAndPassword(email, password).await()
+        result.user != null // Return true if user is logged in
+    } catch (e: Exception) {
+        // Handle exception (e.g., wrong credentials)
+        null
     }
 }
