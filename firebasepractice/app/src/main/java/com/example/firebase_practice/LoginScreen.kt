@@ -38,13 +38,14 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.navigation.NavController
 import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun LoginScreen() {
+fun LoginScreen(navController: NavController) {
     val buttonBlue = Color(0xFF0094FF)
     val customBlue = Color(0xFF2091B6)
     val customCyan = Color(0xFFB1E7F8)
@@ -126,13 +127,16 @@ fun LoginScreen() {
         Button(
             onClick = {
                 coroutineScope.launch {
-                    coroutineScope.launch {
-                        val result = signInWithEmailAndPassword(auth,email.value,password.value)
-                        if (result != null) {
+                    try {
+                        val result = signInWithEmailAndPassword(auth, email.value, password.value)
+                        if (result) {
                             Toast.makeText(context, "Login Successful", Toast.LENGTH_SHORT).show()
                         } else {
                             Toast.makeText(context, "Login Failed", Toast.LENGTH_SHORT).show()
                         }
+                    } catch (e: Exception) {
+                        // Show error message
+                        Toast.makeText(context, "Error: ${e.message}", Toast.LENGTH_SHORT).show()
                     }
                 }
             },
@@ -142,6 +146,7 @@ fun LoginScreen() {
         ) {
             Text(text = "Sign in", color = Color.White, fontSize = 18.sp)
         }
+
 
         Spacer(modifier = Modifier.height(10.dp))
 
@@ -182,13 +187,12 @@ fun LoginScreen() {
     }
 }
 
-suspend fun signInWithEmailAndPassword(auth: FirebaseAuth, email: String, password: String): Boolean? {
+suspend fun signInWithEmailAndPassword(auth: FirebaseAuth, email: String, password: String): Boolean {
     return try {
-        // Sign in with Firebase
         val result = auth.signInWithEmailAndPassword(email, password).await()
         result.user != null // Return true if user is logged in
     } catch (e: Exception) {
-        // Handle exception (e.g., wrong credentials)
-        null
+        // Optionally, show the error message in the UI
+        throw e // Rethrow to handle further up in the UI
     }
 }

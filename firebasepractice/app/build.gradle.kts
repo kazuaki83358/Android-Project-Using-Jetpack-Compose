@@ -52,6 +52,7 @@ dependencies {
     implementation(libs.androidx.material3)
     implementation(libs.androidx.navigation.compose)
     implementation(libs.firebase.auth)
+    implementation(libs.firebase.storage.ktx)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
@@ -68,5 +69,7 @@ dependencies {
 
     // Google Play services
     implementation("com.google.android.gms:play-services-auth:21.3.0")
+
+    implementation("io.coil-kt:coil-compose:2.3.0")
 
 }
