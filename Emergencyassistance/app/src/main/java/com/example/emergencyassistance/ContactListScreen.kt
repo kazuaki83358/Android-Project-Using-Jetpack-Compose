@@ -93,7 +93,11 @@ fun ContactListScreen(navController: NavController) {
 
         // Button to navigate back to Add Emergency Contact screen
         Button(
-            onClick = { navController.navigate("contact_list") },
+            onClick = {
+                navController.navigate("home_screen") {
+                    popUpTo("home_screen") { inclusive = true }
+                }
+            },
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(16.dp),
