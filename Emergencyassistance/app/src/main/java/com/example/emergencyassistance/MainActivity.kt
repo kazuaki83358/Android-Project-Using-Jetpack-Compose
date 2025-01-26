@@ -13,19 +13,31 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         setContent {
             EmergencyAssistanceTheme {
-                // Remember the navController
+                // Remember the NavController
                 val navController = rememberNavController()
 
-                // Setup the NavHost with routes for screens
-                NavHost(navController = navController, startDestination = "home_screen") {
+                // Set up the NavHost with routes
+                NavHost(navController = navController, startDestination = "splash_screen") {
+                    // Splash Screen
+                    composable("splash_screen") {
+                        SplashScreen(onTimeout = {
+                            // Navigate to Home Screen after splash
+                            navController.navigate("home_screen") {
+                                popUpTo("splash_screen") { inclusive = true }
+                            }
+                        })
+                    }
+                    // Home Screen
                     composable("home_screen") {
-                        HomeScreen(navController = navController) // Pass navController
+                        HomeScreen(navController = navController)
                     }
+                    // Add Emergency Contact Screen
                     composable("add_emergency_contact") {
-                        AddEmergencyContactScreen(navController = navController) // Add the emergency contact screen
+                        AddEmergencyContactScreen(navController = navController)
                     }
+                    // Contact List Screen
                     composable("contact_list") {
-                        ContactListScreen(navController = navController) // Add the contact list screen
+                        ContactListScreen(navController = navController)
                     }
                 }
             }
