@@ -1,6 +1,7 @@
 package com.example.chatapp
 
 import android.util.Log
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -32,6 +33,7 @@ import kotlinx.coroutines.launch
 import io.ktor.client.engine.cio.CIO
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.input.ImeAction
 
 @Composable
@@ -87,8 +89,17 @@ fun ChatScreen() {
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Box(
-                    modifier = Modifier.size(40.dp).clip(CircleShape).background(Color.Gray)
-                )
+                    modifier = Modifier
+                        .size(40.dp)
+                        .clip(CircleShape)
+                        .background(Color.Gray)  // Optional: background color for cases when image is not available
+                ) {
+                    Image(
+                        painter = painterResource(id = R.drawable.logo),
+                        contentDescription = "Logo",
+                        modifier = Modifier.fillMaxSize()  // Make the image fill the entire Box
+                    )
+                }
 
                 Spacer(modifier = Modifier.width(8.dp))
 
