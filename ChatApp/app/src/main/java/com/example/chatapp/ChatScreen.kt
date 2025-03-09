@@ -1,6 +1,8 @@
 package com.example.chatapp
 
+import android.os.Build
 import android.util.Log
+import androidx.annotation.RequiresApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -20,7 +22,6 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -35,6 +36,8 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.input.ImeAction
+import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
 
 @Composable
 fun ChatScreen() {
@@ -45,6 +48,22 @@ fun ChatScreen() {
 
     val coroutineScope = rememberCoroutineScope()
     val listState = rememberLazyListState()
+
+    // Get current time in "hh:mm a" format
+    @RequiresApi(Build.VERSION_CODES.O)
+    fun getCurrentTime(): String {
+        val current = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            LocalDateTime.now()
+        } else {
+            TODO("VERSION.SDK_INT < O")
+        }
+        val formatter = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            DateTimeFormatter.ofPattern("hh:mm a")
+        } else {
+            TODO("VERSION.SDK_INT < O")
+        }  // Format like "12:00 PM"
+        return current.format(formatter)
+    }
 
     LaunchedEffect(Unit) {
         client = HttpClient(CIO) {
@@ -140,10 +159,10 @@ fun ChatScreen() {
                         }
 
                         if (isSentByMe) {
-                            // Wrap the timestamp in a Box and align it at the bottom end
+                            // Display the timestamp next to the message
                             Box(modifier = Modifier.fillMaxWidth().padding(end = 16.dp)) {
                                 Text(
-                                    text = "12:00 PM", // You can set actual timestamp here
+                                    text = getCurrentTime(), // Display formatted timestamp
                                     color = Color.Gray,
                                     style = MaterialTheme.typography.bodySmall.copy(fontSize = 12.sp),
                                     modifier = Modifier.align(Alignment.BottomEnd) // Align at the bottom end
@@ -208,7 +227,7 @@ fun ChatScreen() {
                         }
                     }
                 ) {
-                    Icon(imageVector = Icons.Default.Send, contentDescription = "Send")
+                    Icon(imageVector = Icons.AutoMirrored.Filled.Send, contentDescription = "Send")
                 }
             }
         }
