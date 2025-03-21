@@ -39,6 +39,15 @@ class VoiceCommandService : Service() {
 
     override fun onCreate() {
         super.onCreate()
+        Log.d("VoiceCommandService", "onCreate called")
+
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            Log.e("VoiceCommandService", "Location permission not granted. Service cannot start.")
+            Toast.makeText(this, "Location permission required", Toast.LENGTH_SHORT).show()
+            stopSelf()
+            return
+        }
+
         createNotificationChannel()
 
         val notification = buildNotification()
@@ -118,10 +127,13 @@ class VoiceCommandService : Service() {
     }
 
     private fun triggerSOS() {
+        Log.d("VoiceCommandService", "Triggering SOS")
         CoroutineScope(Dispatchers.IO).launch {
             val contacts = emergencyContactDao.getAllContacts()
+            Log.d("VoiceCommandService", "Found ${contacts.size} contacts")
             contacts.forEach { contact ->
-                launch(Dispatchers.IO){ //send each message in background.
+                Log.d("VoiceCommandService", "Sending SOS to ${contact.phoneNumber}")
+                launch(Dispatchers.IO){
                     sosHelper.triggerSOS(contact.phoneNumber)
                 }
             }
