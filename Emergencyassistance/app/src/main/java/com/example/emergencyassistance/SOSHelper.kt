@@ -43,24 +43,26 @@ class SOSHelper(private val context: Context) {
                     Manifest.permission.SEND_SMS
                 ) == PackageManager.PERMISSION_GRANTED
             ) {
-                val message = "S.O.S. Emergency! I am at location: $lat, $lon. Please help!"
+                val locationUrl = "https://www.google.com/maps?q=$lat,$lon"
+                val message = "S.O.S. Emergency! I am at the following location: $locationUrl. Please help!"
+
                 if (contact != null) {
                     try {
                         val smsManager = SmsManager.getDefault()
                         smsManager.sendTextMessage(contact, null, message, null, null)
 
-                        withContext(Dispatchers.Main){
+                        withContext(Dispatchers.Main) {
                             Toast.makeText(context, "SOS message sent to $contact", Toast.LENGTH_SHORT).show()
                         }
 
                     } catch (e: Exception) {
-                        withContext(Dispatchers.Main){
+                        withContext(Dispatchers.Main) {
                             Toast.makeText(context, "Failed to send SOS message to $contact", Toast.LENGTH_SHORT).show()
                         }
                     }
                 }
             } else {
-                withContext(Dispatchers.Main){
+                withContext(Dispatchers.Main) {
                     Toast.makeText(context, "SMS permission is required", Toast.LENGTH_SHORT).show()
                 }
             }
