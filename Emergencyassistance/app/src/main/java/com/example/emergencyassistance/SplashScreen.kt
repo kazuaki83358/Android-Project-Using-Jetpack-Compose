@@ -75,13 +75,13 @@ fun SplashScreen(onTimeout: () -> Unit) {
                 )
 
                 // Your name
-                Text(
-                    text = "Made by Nishant Kumar",
-                    color = Color.White,
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.Medium,
-                    fontFamily = playFareBold
-                )
+//                Text(
+//                    text = "Made by Nishant Kumar",
+//                    color = Color.White,
+//                    fontSize = 16.sp,
+//                    fontWeight = FontWeight.Medium,
+//                    fontFamily = playFareBold
+//                )
             }
         }
     }
