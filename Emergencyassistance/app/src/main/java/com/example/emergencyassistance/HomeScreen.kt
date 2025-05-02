@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.List
+import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -25,20 +26,19 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.core.content.ContextCompat
-import com.google.android.gms.location.LocationServices
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import androidx.navigation.NavController
+import com.google.android.gms.location.LocationServices
+import kotlinx.coroutines.*
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(navController: NavController) {
     val context = LocalContext.current
+    val emergencyContactDao = AppDatabase.getDatabase(context).emergencyContactDao()
+
     var locationPermissionGranted by remember { mutableStateOf(false) }
     var smsPermissionGranted by remember { mutableStateOf(false) }
     var microphonePermissionGranted by remember { mutableStateOf(false) }
-    val emergencyContactDao = AppDatabase.getDatabase(context).emergencyContactDao()
 
     val permissionsToRequest = arrayOf(
         Manifest.permission.ACCESS_FINE_LOCATION,
@@ -56,28 +56,44 @@ fun HomeScreen(navController: NavController) {
         if (locationPermissionGranted && smsPermissionGranted && microphonePermissionGranted) {
             startVoiceCommand(context)
         } else {
-            Toast.makeText(context, "Permissions are required.", Toast.LENGTH_SHORT).show()
+            Toast.makeText(context, "All permissions are required.", Toast.LENGTH_SHORT).show()
         }
     }
 
+    // Launch permission request on first render
     LaunchedEffect(Unit) {
-        val permissionsNotGranted = permissionsToRequest.filter {
+        val notGranted = permissionsToRequest.filter {
             ContextCompat.checkSelfPermission(context, it) != PackageManager.PERMISSION_GRANTED
         }
-
-        if (permissionsNotGranted.isNotEmpty()) {
+        if (notGranted.isNotEmpty()) {
             permissionLauncher.launch(permissionsToRequest)
         } else {
             locationPermissionGranted = true
             smsPermissionGranted = true
             microphonePermissionGranted = true
-            Log.d("HomeScreen", "Permissions already granted, starting voice command.")
             startVoiceCommand(context)
         }
     }
 
     Scaffold(
         containerColor = Color.White,
+        topBar = {
+            TopAppBar(
+                title = { Text(text = "Emergency Assistance",color = Color.White) },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = Color(0xFFea9ab2)
+                ),
+                actions = {
+                    IconButton(onClick = { navController.navigate("nearby_help_screen") }) {
+                        Icon(
+                            imageVector = Icons.Default.Notifications,
+                            contentDescription = "Nearby Help",
+                            tint = Color.White
+                        )
+                    }
+                }
+            )
+        },
         bottomBar = {
             BottomAppBar(
                 modifier = Modifier
@@ -124,11 +140,8 @@ fun HomeScreen(navController: NavController) {
                 fontSize = 25.sp,
                 fontWeight = FontWeight.Bold,
                 color = Color.Red,
-                modifier = Modifier
-                    .align(Alignment.CenterHorizontally)
-                    .padding(top = 40.dp, bottom = 40.dp)
+                modifier = Modifier.padding(vertical = 40.dp)
             )
-            Spacer(modifier = Modifier.height(60.dp))
 
             Box(
                 contentAlignment = Alignment.Center,
@@ -142,12 +155,10 @@ fun HomeScreen(navController: NavController) {
                         if (locationPermissionGranted && smsPermissionGranted) {
                             triggerSOS(context, emergencyContactDao)
                         } else {
-                            Toast.makeText(context, "Permissions are required to send an SOS.", Toast.LENGTH_SHORT).show()
+                            Toast.makeText(context, "Permissions required to send SOS.", Toast.LENGTH_SHORT).show()
                         }
                     },
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(0.dp),
+                    modifier = Modifier.fillMaxSize(),
                     colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent)
                 ) {
                     Text(
@@ -161,51 +172,47 @@ fun HomeScreen(navController: NavController) {
 
             Spacer(modifier = Modifier.height(40.dp))
 
-            TextButton(onClick = { }) {
-                Text(
-                    text = "Tap the SOS button to alert your emergency contacts.",
-                    fontSize = 16.sp,
-                    color = Color(0xFF218380)
-                )
-            }
+            Text(
+                modifier = Modifier.padding(start = 10.dp),
+                text = "Tap the SOS button to alert your emergency contacts.",
+                fontSize = 16.sp,
+                color = Color(0xFF218380)
+            )
         }
     }
 }
 
 fun startVoiceCommand(context: Context) {
-    Log.d("HomeScreen", "Starting VoiceCommandService")
-
-    if (ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED &&
-        ContextCompat.checkSelfPermission(context, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED
+    if (
+        ContextCompat.checkSelfPermission(context, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED &&
+        ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED
     ) {
         try {
             val serviceIntent = Intent(context, VoiceCommandService::class.java)
             ContextCompat.startForegroundService(context, serviceIntent)
-            Log.d("HomeScreen", "VoiceCommandService started successfully.")
+            Log.d("HomeScreen", "VoiceCommandService started.")
         } catch (e: Exception) {
-            Log.e("HomeScreen", "Failed to start VoiceCommandService: ${e.message}", e)
-            Toast.makeText(context, "Failed to start voice command.", Toast.LENGTH_SHORT).show()
+            Log.e("HomeScreen", "Error starting service: ${e.message}")
+            Toast.makeText(context, "Could not start voice command.", Toast.LENGTH_SHORT).show()
         }
     } else {
-        Log.e("HomeScreen", "Permissions not granted to start VoiceCommandService.")
-        Toast.makeText(context, "Permissions not granted.", Toast.LENGTH_SHORT).show()
+        Toast.makeText(context, "Voice command permissions not granted.", Toast.LENGTH_SHORT).show()
     }
 }
 
 fun triggerSOS(context: Context, emergencyContactDao: EmergencyContactDao) {
     if (ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
-        LocationServices.getFusedLocationProviderClient(context).lastLocation.addOnSuccessListener { location ->
-            location?.let {
-                sendSOSMessage(it.latitude, it.longitude, context, emergencyContactDao)
-            } ?: run {
-                Toast.makeText(context, "Could not get location.", Toast.LENGTH_SHORT).show()
+        LocationServices.getFusedLocationProviderClient(context).lastLocation
+            .addOnSuccessListener { location ->
+                location?.let {
+                    sendSOSMessage(it.latitude, it.longitude, context, emergencyContactDao)
+                } ?: Toast.makeText(context, "Unable to fetch location.", Toast.LENGTH_SHORT).show()
             }
-        }.addOnFailureListener { e ->
-            Log.e("HomeScreen", "Failed to get location: ${e.message}")
-            Toast.makeText(context, "Failed to get location.", Toast.LENGTH_SHORT).show()
-        }
+            .addOnFailureListener {
+                Toast.makeText(context, "Location fetch failed.", Toast.LENGTH_SHORT).show()
+            }
     } else {
-        Toast.makeText(context, "Location permission is required.", Toast.LENGTH_SHORT).show()
+        Toast.makeText(context, "Location permission is needed.", Toast.LENGTH_SHORT).show()
     }
 }
 
@@ -213,25 +220,23 @@ fun sendSOSMessage(lat: Double, lon: Double, context: Context, emergencyContactD
     CoroutineScope(Dispatchers.IO).launch {
         if (ContextCompat.checkSelfPermission(context, Manifest.permission.SEND_SMS) == PackageManager.PERMISSION_GRANTED) {
             val locationUrl = "https://www.google.com/maps?q=$lat,$lon"
-            val message = "S.O.S. Emergency! I am at the following location: $locationUrl. Please help!"
+            val message = "S.O.S. Emergency! I'm at $locationUrl. Please help!"
 
             emergencyContactDao.getAllContacts().forEach { contact ->
-                launch(Dispatchers.IO) {
-                    try {
-                        SmsManager.getDefault().sendTextMessage(contact.phoneNumber, null, message, null, null)
-                        withContext(Dispatchers.Main) {
-                            Toast.makeText(context, "SOS message sent to ${contact.name}.", Toast.LENGTH_SHORT).show()
-                        }
-                    } catch (e: Exception) {
-                        withContext(Dispatchers.Main) {
-                            Toast.makeText(context, "Failed to send to ${contact.name}.", Toast.LENGTH_SHORT).show()
-                        }
+                try {
+                    SmsManager.getDefault().sendTextMessage(contact.phoneNumber, null, message, null, null)
+                    withContext(Dispatchers.Main) {
+                        Toast.makeText(context, "Message sent to ${contact.name}.", Toast.LENGTH_SHORT).show()
+                    }
+                } catch (e: Exception) {
+                    withContext(Dispatchers.Main) {
+                        Toast.makeText(context, "Failed to send to ${contact.name}.", Toast.LENGTH_SHORT).show()
                     }
                 }
             }
         } else {
             withContext(Dispatchers.Main) {
-                Toast.makeText(context, "SMS permission is required.", Toast.LENGTH_SHORT).show()
+                Toast.makeText(context, "SMS permission required.", Toast.LENGTH_SHORT).show()
             }
         }
     }

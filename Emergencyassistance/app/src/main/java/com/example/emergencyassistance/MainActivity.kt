@@ -80,21 +80,19 @@ class MainActivity : ComponentActivity() {
                 ) {
                     composable("splash_screen") {
                         SplashScreen(onTimeout = {
-                            // Check if user is logged in
                             val auth = FirebaseAuth.getInstance()
                             val user = auth.currentUser
 
                             if (user != null) {
-                                // User is logged in, navigate to HomeScreen
                                 navController.navigate("home_screen") {
                                     popUpTo("splash_screen") { inclusive = true }
                                 }
                             } else {
-                                // User is not logged in, navigate to LoginScreen
                                 navController.navigate("login_screen") {
                                     popUpTo("splash_screen") { inclusive = true }
                                 }
                             }
+
                             startService(Intent(this@MainActivity, VoiceCommandService::class.java))
                         })
                     }
@@ -117,6 +115,11 @@ class MainActivity : ComponentActivity() {
 
                     composable("contact_list") {
                         ContactListScreen(navController = navController)
+                    }
+
+                    // ✅ New screen added
+                    composable("nearby_help_screen") {
+                        NearbyHelpScreen(navController = navController)
                     }
                 }
             }
