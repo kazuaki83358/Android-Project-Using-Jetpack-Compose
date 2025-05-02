@@ -13,6 +13,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.example.emergencyassistance.ui.theme.EmergencyAssistanceTheme
+import com.google.firebase.auth.FirebaseAuth
 
 class MainActivity : ComponentActivity() {
 
@@ -55,7 +56,7 @@ class MainActivity : ComponentActivity() {
 
     override fun onRequestPermissionsResult(
         requestCode: Int,
-        permissions: Array<String>, // Change to Array<String>
+        permissions: Array<String>,
         grantResults: IntArray
     ) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
@@ -79,8 +80,20 @@ class MainActivity : ComponentActivity() {
                 ) {
                     composable("splash_screen") {
                         SplashScreen(onTimeout = {
-                            navController.navigate("login_screen") {
-                                popUpTo("splash_screen") { inclusive = true }
+                            // Check if user is logged in
+                            val auth = FirebaseAuth.getInstance()
+                            val user = auth.currentUser
+
+                            if (user != null) {
+                                // User is logged in, navigate to HomeScreen
+                                navController.navigate("home_screen") {
+                                    popUpTo("splash_screen") { inclusive = true }
+                                }
+                            } else {
+                                // User is not logged in, navigate to LoginScreen
+                                navController.navigate("login_screen") {
+                                    popUpTo("splash_screen") { inclusive = true }
+                                }
                             }
                             startService(Intent(this@MainActivity, VoiceCommandService::class.java))
                         })

@@ -1,5 +1,8 @@
 package com.example.emergencyassistance
 
+import android.os.Bundle
+import androidx.activity.ComponentActivity
+import androidx.activity.compose.setContent
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -17,6 +20,7 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.delay
 
 @Composable
@@ -29,6 +33,10 @@ fun SplashScreen(onTimeout: () -> Unit) {
     val playFareBold = FontFamily(
         Font(R.font.playfairbold)
     )
+
+    // FirebaseAuth instance to check login status
+    val auth = FirebaseAuth.getInstance()
+
     // Main container with gradient background
     Box(
         modifier = Modifier
@@ -88,6 +96,14 @@ fun SplashScreen(onTimeout: () -> Unit) {
     // Simulate a delay for splash screen transition
     LaunchedEffect(Unit) {
         delay(2000) // 2-second delay
-        onTimeout() // Trigger navigation after the delay
+        // Check if user is logged in
+        val user = auth.currentUser
+        if (user != null) {
+            // User is logged in, navigate to HomeScreen
+            onTimeout() // Trigger HomeScreen
+        } else {
+            // User is not logged in, navigate to LoginScreen
+            onTimeout() // Trigger LoginScreen
+        }
     }
 }
