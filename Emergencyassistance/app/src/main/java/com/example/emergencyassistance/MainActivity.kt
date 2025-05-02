@@ -79,11 +79,19 @@ class MainActivity : ComponentActivity() {
                 ) {
                     composable("splash_screen") {
                         SplashScreen(onTimeout = {
-                            navController.navigate("home_screen") {
+                            navController.navigate("login_screen") {
                                 popUpTo("splash_screen") { inclusive = true }
                             }
                             startService(Intent(this@MainActivity, VoiceCommandService::class.java))
                         })
+                    }
+
+                    composable("login_screen") {
+                        LoginScreen(navController = navController)
+                    }
+
+                    composable("signup_screen") {
+                        SignUpScreen(navController = navController)
                     }
 
                     composable("home_screen") {
