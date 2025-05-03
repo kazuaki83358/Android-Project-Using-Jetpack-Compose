@@ -35,44 +35,67 @@ fun NearbyHelpScreen(navController: NavController) {
     val currentUserId = FirebaseAuth.getInstance().currentUser?.uid
     var isLoading by remember { mutableStateOf(true) }
 
+    // LaunchedEffect to load nearby users
     LaunchedEffect(Unit) {
         if (currentUserId == null) {
             Toast.makeText(context, "User not logged in", Toast.LENGTH_SHORT).show()
+            isLoading = false
             return@LaunchedEffect
         }
 
-        firestore.collection("users").document(currentUserId).get()
+        // Get the current user's data
+        firestore.collection("nearby_users").document(currentUserId).get()
             .addOnSuccessListener { currentUserDoc ->
-                val currentLocation = currentUserDoc.getGeoPoint("location")
-                if (currentLocation == null) {
-                    Toast.makeText(context, "Your location is not available", Toast.LENGTH_SHORT).show()
+                val myLat = currentUserDoc.getDouble("latitude")
+                val myLon = currentUserDoc.getDouble("longitude")
+                val sosActive = currentUserDoc.getBoolean("sosactive") ?: false
+
+                // Handle missing or invalid data
+                if (myLat == null || myLon == null || !sosActive) {
+                    Toast.makeText(context, "Your location is not available or SOS is not active", Toast.LENGTH_SHORT).show()
                     isLoading = false
                     return@addOnSuccessListener
                 }
 
-                val myLat = currentLocation.latitude
-                val myLon = currentLocation.longitude
+                // Clear the nearby users list before adding the current user
+                nearbyUsers.clear()
 
-                firestore.collection("users")
-                    .whereEqualTo("isSOSActive", true)
+                // Add the current user to the list (even though they won't be in the nearby list)
+                nearbyUsers.add(
+                    NearbyUser(
+                        uid = currentUserId,
+                        name = "You",
+                        latitude = myLat,
+                        longitude = myLon,
+                        isSOSActive = sosActive
+                    )
+                )
+
+                // Fetch other nearby users with active SOS requests
+                firestore.collection("nearby_users")
+                    .whereEqualTo("sosactive", true)
                     .get()
                     .addOnSuccessListener { result ->
-                        nearbyUsers.clear()
                         for (doc in result) {
-                            if (doc.id == currentUserId) continue  // Skip self
+                            if (doc.id == currentUserId) continue  // Skip the current user
+
                             val name = doc.getString("name") ?: "Unknown"
-                            val geoPoint = doc.getGeoPoint("location")
-                            val isSOSActive = doc.getBoolean("isSOSActive") ?: false
-                            if (geoPoint != null && isSOSActive) {
-                                val distance = calculateDistance(myLat, myLon, geoPoint.latitude, geoPoint.longitude)
+                            val lat = doc.getDouble("latitude")
+                            val lon = doc.getDouble("longitude")
+                            val sosActive = doc.getBoolean("sosactive") ?: false
+
+                            // Only add valid users with a location and active SOS request
+                            if (lat != null && lon != null && sosActive) {
+                                val distance = calculateDistance(myLat, myLon, lat, lon)
+                                // Only add users within 2 km distance
                                 if (distance <= 2.0) {
                                     nearbyUsers.add(
                                         NearbyUser(
                                             uid = doc.id,
                                             name = name,
-                                            latitude = geoPoint.latitude,
-                                            longitude = geoPoint.longitude,
-                                            isSOSActive = isSOSActive
+                                            latitude = lat,
+                                            longitude = lon,
+                                            isSOSActive = sosActive
                                         )
                                     )
                                 }
@@ -91,6 +114,7 @@ fun NearbyHelpScreen(navController: NavController) {
             }
     }
 
+    // Scaffold for the UI layout
     Scaffold(
         topBar = {
             TopAppBar(
@@ -131,7 +155,7 @@ fun NearbyHelpScreen(navController: NavController) {
                                 Text("Location: ${user.latitude}, ${user.longitude}", fontSize = 16.sp)
                                 Button(
                                     onClick = {
-                                        val uri = Uri.parse(user.locationLink) // Use the computed location link
+                                        val uri = Uri.parse("https://www.google.com/maps/search/?api=1&query=${user.latitude},${user.longitude}")
                                         val intent = Intent(Intent.ACTION_VIEW, uri)
                                         context.startActivity(intent)
                                     },
@@ -148,6 +172,7 @@ fun NearbyHelpScreen(navController: NavController) {
     }
 }
 
+// Function to calculate distance between two geographical points (latitude, longitude)
 fun calculateDistance(lat1: Double, lon1: Double, lat2: Double, lon2: Double): Double {
     val R = 6371.0 // Earth radius in km
     val dLat = Math.toRadians(lat2 - lat1)
@@ -156,5 +181,5 @@ fun calculateDistance(lat1: Double, lon1: Double, lat2: Double, lon2: Double): D
             cos(Math.toRadians(lat1)) * cos(Math.toRadians(lat2)) *
             sin(dLon / 2).pow(2.0)
     val c = 2 * atan2(sqrt(a), sqrt(1 - a))
-    return R * c
+    return R * c // Distance in km
 }
