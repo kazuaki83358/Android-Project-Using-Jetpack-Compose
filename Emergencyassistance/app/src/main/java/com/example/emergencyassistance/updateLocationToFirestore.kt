@@ -15,41 +15,48 @@ fun updateLocationToFirestore(
 ) {
     val firestore = FirebaseFirestore.getInstance()
     val auth = FirebaseAuth.getInstance()
-    val user = auth.currentUser ?: return // Make sure the user is logged in
+    val user = auth.currentUser ?: return
 
     val uid = user.uid
-    val name = user.displayName ?: "Unknown User" // Use displayName or a default if null
-
     val fusedLocationClient = LocationServices.getFusedLocationProviderClient(context)
 
-    // Get the latest location
-    fusedLocationClient.lastLocation.addOnSuccessListener { location ->
-        if (location != null) {
-            val nearbyUser = NearbyUser(
-                uid = uid,
-                name = name,
-                latitude = location.latitude,
-                longitude = location.longitude,
-                isSOSActive = isSOSActive
-            )
+    // Step 1: Fetch user name from Firestore
+    firestore.collection("users").document(uid).get()
+        .addOnSuccessListener { document ->
+            val name = document.getString("name") ?: "Unknown User"
 
-            // Log the data to ensure it's correct before uploading
-            Log.d("NearbyUserData", "User ID: $uid, Name: $name, Lat: ${location.latitude}, Long: ${location.longitude}, SOS Active: $isSOSActive")
+            // Step 2: Get location
+            fusedLocationClient.lastLocation.addOnSuccessListener { location ->
+                if (location != null) {
+                    val nearbyUser = NearbyUser(
+                        uid = uid,
+                        name = name,
+                        latitude = location.latitude,
+                        longitude = location.longitude,
+                        isSOSActive = isSOSActive
+                    )
 
-            // Store the data in Firestore
-            firestore.collection("nearby_users")
-                .document(uid) // Use UID as the document ID
-                .set(nearbyUser)
-                .addOnSuccessListener {
-                    Log.d("FirestoreUpdate", "Location and SOS status updated successfully.")
+                    // Log
+                    Log.d("NearbyUserData", "User ID: $uid, Name: $name, Lat: ${location.latitude}, Long: ${location.longitude}, SOS Active: $isSOSActive")
+
+                    // Step 3: Upload to Firestore
+                    firestore.collection("nearby_users")
+                        .document(uid)
+                        .set(nearbyUser)
+                        .addOnSuccessListener {
+                            Log.d("FirestoreUpdate", "Location and SOS status updated successfully.")
+                        }
+                        .addOnFailureListener { exception ->
+                            Log.e("FirestoreUpdate", "Failed to update: ${exception.message}")
+                        }
+                } else {
+                    Log.e("LocationError", "Location is null.")
                 }
-                .addOnFailureListener { exception ->
-                    Log.e("FirestoreUpdate", "Failed to update location and SOS status: ${exception.message}")
-                }
-        } else {
-            Log.e("LocationError", "Location is null.")
+            }.addOnFailureListener { exception ->
+                Log.e("LocationError", "Failed to retrieve location: ${exception.message}")
+            }
         }
-    }.addOnFailureListener { exception ->
-        Log.e("LocationError", "Failed to retrieve last location: ${exception.message}")
-    }
+        .addOnFailureListener { exception ->
+            Log.e("UserNameFetchError", "Failed to fetch user name: ${exception.message}")
+        }
 }
