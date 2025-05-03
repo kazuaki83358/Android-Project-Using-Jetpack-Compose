@@ -32,38 +32,36 @@ import androidx.navigation.compose.rememberNavController
 
 @Composable
 fun SignUpScreen(navController: NavController) {
-    var name by remember { mutableStateOf("") }
-    var phone by remember { mutableStateOf("") }
-    var email by remember { mutableStateOf("") }
-    var password by remember { mutableStateOf("") }
+    var user by remember { mutableStateOf(User()) }
     var confirmPassword by remember { mutableStateOf("") }
     var isLoading by remember { mutableStateOf(false) }
 
-    val isSignupEnabled = email.isNotEmpty() && password.isNotEmpty() && confirmPassword == password && name.isNotEmpty() && phone.isNotEmpty()
+    // Check if all fields are filled and passwords match
+    val isSignupEnabled = user.email.isNotEmpty() && user.password.isNotEmpty() && confirmPassword == user.password && user.name.isNotEmpty() && user.phone.isNotEmpty()
 
     val auth = FirebaseAuth.getInstance()
     val firestore = FirebaseFirestore.getInstance()
 
     // Handle Signup
     val context = LocalContext.current
-    val handleSignup = lambda@{
-        if (password != confirmPassword) {
+    val handleSignup = handleSignup@{
+        if (user.password != confirmPassword) {
             Toast.makeText(context, "Passwords do not match", Toast.LENGTH_SHORT).show()
-            return@lambda
+            return@handleSignup
         }
 
         isLoading = true
-        auth.createUserWithEmailAndPassword(email, password)
+        auth.createUserWithEmailAndPassword(user.email, user.password)
             .addOnCompleteListener { task ->
                 if (task.isSuccessful) {
-                    val user = auth.currentUser
+                    val newUser = auth.currentUser
                     val userMap = hashMapOf(
-                        "name" to name,
-                        "phone" to phone,
-                        "email" to email
+                        "name" to user.name,
+                        "phone" to user.phone,
+                        "email" to user.email
                     )
 
-                    firestore.collection("users").document(user!!.uid).set(userMap)
+                    firestore.collection("users").document(newUser!!.uid).set(userMap)
                         .addOnCompleteListener { firestoreTask ->
                             isLoading = false
                             if (firestoreTask.isSuccessful) {
@@ -100,8 +98,8 @@ fun SignUpScreen(navController: NavController) {
 
         // Input Fields
         OutlinedTextField(
-            value = name,
-            onValueChange = { name = it },
+            value = user.name,
+            onValueChange = { user = user.copy(name = it) },
             label = { Text("Name", color = DarkText) },
             modifier = Modifier.fillMaxWidth(),
             textStyle = TextStyle(color = DarkText)
@@ -110,8 +108,8 @@ fun SignUpScreen(navController: NavController) {
         Spacer(modifier = Modifier.height(8.dp))
 
         OutlinedTextField(
-            value = phone,
-            onValueChange = { phone = it },
+            value = user.phone,
+            onValueChange = { user = user.copy(phone = it) },
             label = { Text("Phone Number", color = DarkText) },
             keyboardOptions = KeyboardOptions.Default.copy(imeAction = ImeAction.Done),
             keyboardActions = KeyboardActions(onDone = { /* Handle action */ }),
@@ -122,8 +120,8 @@ fun SignUpScreen(navController: NavController) {
         Spacer(modifier = Modifier.height(8.dp))
 
         OutlinedTextField(
-            value = email,
-            onValueChange = { email = it },
+            value = user.email,
+            onValueChange = { user = user.copy(email = it) },
             label = { Text("Email", color = DarkText) },
             modifier = Modifier.fillMaxWidth(),
             textStyle = TextStyle(color = DarkText)
@@ -132,8 +130,8 @@ fun SignUpScreen(navController: NavController) {
         Spacer(modifier = Modifier.height(8.dp))
 
         OutlinedTextField(
-            value = password,
-            onValueChange = { password = it },
+            value = user.password,
+            onValueChange = { user = user.copy(password = it) },
             label = { Text("Password", color = DarkText) },
             visualTransformation = PasswordVisualTransformation(),
             modifier = Modifier.fillMaxWidth(),
@@ -154,7 +152,7 @@ fun SignUpScreen(navController: NavController) {
         Spacer(modifier = Modifier.height(16.dp))
 
         Button(
-            onClick = { handleSignup() }, // Calling handleSignup without returning from composable
+            onClick = { handleSignup() }, // Calling handleSignup
             enabled = isSignupEnabled && !isLoading,
             colors = ButtonDefaults.buttonColors(
                 containerColor = DeepRed,
