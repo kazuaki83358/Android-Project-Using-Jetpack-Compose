@@ -11,35 +11,43 @@ import com.google.firebase.firestore.FirebaseFirestore
 @RequiresPermission(allOf = [Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION])
 fun updateLocationToFirestore(
     context: Context,
-    name: String,
     isSOSActive: Boolean
 ) {
     val firestore = FirebaseFirestore.getInstance()
     val auth = FirebaseAuth.getInstance()
-    val uid = auth.currentUser?.uid ?: return
+    val user = auth.currentUser ?: return // Make sure the user is logged in
+
+    val uid = user.uid
+    val name = user.displayName ?: "Unknown User" // Use displayName or a default if null
 
     val fusedLocationClient = LocationServices.getFusedLocationProviderClient(context)
 
     // Get the latest location
     fusedLocationClient.lastLocation.addOnSuccessListener { location ->
         if (location != null) {
-            val user = NearbyUser(
+            val nearbyUser = NearbyUser(
                 uid = uid,
                 name = name,
                 latitude = location.latitude,
                 longitude = location.longitude,
-                isSOSActive = isSOSActive // Update SOS status here
+                isSOSActive = isSOSActive
             )
 
+            // Log the data to ensure it's correct before uploading
+            Log.d("NearbyUserData", "User ID: $uid, Name: $name, Lat: ${location.latitude}, Long: ${location.longitude}, SOS Active: $isSOSActive")
+
+            // Store the data in Firestore
             firestore.collection("nearby_users")
-                .document(uid)
-                .set(user)
+                .document(uid) // Use UID as the document ID
+                .set(nearbyUser)
                 .addOnSuccessListener {
                     Log.d("FirestoreUpdate", "Location and SOS status updated successfully.")
                 }
                 .addOnFailureListener { exception ->
                     Log.e("FirestoreUpdate", "Failed to update location and SOS status: ${exception.message}")
                 }
+        } else {
+            Log.e("LocationError", "Location is null.")
         }
     }.addOnFailureListener { exception ->
         Log.e("LocationError", "Failed to retrieve last location: ${exception.message}")

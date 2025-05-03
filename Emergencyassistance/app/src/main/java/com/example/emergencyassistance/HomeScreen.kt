@@ -29,6 +29,8 @@ import androidx.core.content.ContextCompat
 import androidx.navigation.NavController
 import com.google.android.gms.location.LocationServices
 import kotlinx.coroutines.*
+import android.os.Handler
+import android.os.Looper
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -62,6 +64,9 @@ fun HomeScreen(navController: NavController) {
         } else {
             permissionLauncher.launch(requiredPermissions)
         }
+
+        // On launch, update the user's data to Firestore with isSOSActive = false
+        updateLocationToFirestore(context, isSOSActive = false)
     }
 
     Scaffold(
@@ -128,7 +133,11 @@ fun HomeScreen(navController: NavController) {
             SOSButton(
                 permissionsGranted = permissionsGranted,
                 context = context,
-                onTrigger = { triggerSOS(context, emergencyContactDao) }
+                onTrigger = {
+                    // Update the user's data to Firestore with isSOSActive = true
+                    updateLocationToFirestore(context, isSOSActive = true)
+                    triggerSOS(context, emergencyContactDao)
+                }
             )
 
             Spacer(modifier = Modifier.height(40.dp))
@@ -179,6 +188,7 @@ fun startVoiceCommand(context: Context) {
         Toast.makeText(context, "Could not start voice command.", Toast.LENGTH_SHORT).show()
     }
 }
+
 fun triggerSOS(context: Context, emergencyContactDao: EmergencyContactDao) {
     if (ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
         LocationServices.getFusedLocationProviderClient(context).lastLocation
@@ -186,7 +196,7 @@ fun triggerSOS(context: Context, emergencyContactDao: EmergencyContactDao) {
                 location?.let {
                     // Update isSOSActive to true
                     val isSOSActive = true
-                    updateLocationToFirestore(context, "User Name", isSOSActive)
+                    updateLocationToFirestore(context, isSOSActive)
 
                     // Send the SOS message with the location
                     sendSOSMessage(it.latitude, it.longitude, context, emergencyContactDao)

@@ -7,6 +7,7 @@ data class NearbyUser(
     val longitude: Double = 0.0,
     val isSOSActive: Boolean = false
 ) {
+    // Generate the location link dynamically
     val locationLink: String
-        get() = "https://www.google.com/maps/search/?api=1&query=$latitude,$longitude"
+        get() = "https://www.google.com/maps?q=$latitude,$longitude"
 }

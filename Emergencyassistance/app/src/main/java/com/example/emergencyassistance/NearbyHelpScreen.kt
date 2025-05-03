@@ -33,6 +33,7 @@ fun NearbyHelpScreen(navController: NavController) {
     val firestore = FirebaseFirestore.getInstance()
     val nearbyUsers = remember { mutableStateListOf<NearbyUser>() }
     val currentUserId = FirebaseAuth.getInstance().currentUser?.uid
+    var isLoading by remember { mutableStateOf(true) }
 
     LaunchedEffect(Unit) {
         if (currentUserId == null) {
@@ -45,6 +46,7 @@ fun NearbyHelpScreen(navController: NavController) {
                 val currentLocation = currentUserDoc.getGeoPoint("location")
                 if (currentLocation == null) {
                     Toast.makeText(context, "Your location is not available", Toast.LENGTH_SHORT).show()
+                    isLoading = false
                     return@addOnSuccessListener
                 }
 
@@ -76,13 +78,16 @@ fun NearbyHelpScreen(navController: NavController) {
                                 }
                             }
                         }
+                        isLoading = false
                     }
                     .addOnFailureListener {
                         Toast.makeText(context, "Failed to fetch users: ${it.message}", Toast.LENGTH_SHORT).show()
+                        isLoading = false
                     }
             }
             .addOnFailureListener {
                 Toast.makeText(context, "Failed to get current user location: ${it.message}", Toast.LENGTH_SHORT).show()
+                isLoading = false
             }
     }
 
@@ -104,7 +109,9 @@ fun NearbyHelpScreen(navController: NavController) {
             Text("Users within 2 km", fontSize = 20.sp, fontWeight = FontWeight.Bold)
             Spacer(modifier = Modifier.height(16.dp))
 
-            if (nearbyUsers.isEmpty()) {
+            if (isLoading) {
+                CircularProgressIndicator(modifier = Modifier.padding(top = 16.dp))
+            } else if (nearbyUsers.isEmpty()) {
                 Text("No users nearby.", fontSize = 16.sp)
             } else {
                 LazyColumn {
@@ -124,7 +131,7 @@ fun NearbyHelpScreen(navController: NavController) {
                                 Text("Location: ${user.latitude}, ${user.longitude}", fontSize = 16.sp)
                                 Button(
                                     onClick = {
-                                        val uri = Uri.parse(user.locationLink)
+                                        val uri = Uri.parse(user.locationLink) // Use the computed location link
                                         val intent = Intent(Intent.ACTION_VIEW, uri)
                                         context.startActivity(intent)
                                     },
